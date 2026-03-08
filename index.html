@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>☀️ Arntes solservice</title>
+  <!--
+    v4 – beregninger: NOAA Solar Calculator (±17–30 sek fra timeanddate.com).
+  -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:       #0d1b2a;
+      --card:     #1a2e44;
+      --cborder:  #1f3a57;
+      --accent:   #f4a429;
+      --accent2:  #ff7f2a;
+      --adim:     rgba(244,164,41,0.12);
+      --text:     #e8f4fd;
+      --muted:    #7a9bb5;
+      --green:    #4ade80;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    #app { max-width: 700px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header { text-align: center; padding: 28px 0 22px; }
+    header h1 {
+      font-size: 2.1rem; font-weight: 800; letter-spacing: -.5px;
+      background: linear-gradient(135deg, #f4a429, #ff7f2a);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    header p { color: var(--muted); margin-top: 5px; font-size: .9rem; }
+
+    /* ── Input ── */
+    .input-panel {
+      background: var(--card); border: 1px solid var(--cborder);
+      border-radius: 16px; padding: 18px; margin-bottom: 16px;
+    }
+    .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 155px; }
+    .input-group label {
+      font-size: .72rem; text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); font-weight: 600;
+    }
+    input[type="date"], input[type="text"] {
+      background: #0d1b2a; border: 1px solid #2a4a6e; border-radius: 10px;
+      color: var(--text); padding: 9px 13px; font-size: .97rem; outline: none;
+      transition: border-color .2s; width: 100%;
+    }
+    input:focus { border-color: var(--accent); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.7); }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    button {
+      border: none; border-radius: 10px; cursor: pointer;
+      font-size: .9rem; font-weight: 600; padding: 10px 18px; transition: all .18s;
+    }
+    .btn-primary { background: linear-gradient(135deg,#f4a429,#ff7f2a); color: #0d1b2a; flex: 1; }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-secondary { background: #1f3a57; color: var(--text); border: 1px solid #2a4a6e; }
+    .btn-secondary:hover { background: #2a4a6e; }
+.btn-png     { background: #1f3a57; color: #c084fc; border: 1px solid #c084fc; font-size: .84rem; }
+    .btn-png:hover { background: rgba(192,132,252,.1); }
+
+    /* ── Status ── */
+    .status-msg { text-align: center; padding: 8px; font-size: .88rem; color: var(--muted); min-height: 30px; }
+    .status-msg.error { color: #f87171; }
+
+    /* ── Milestone banner ── */
+    .milestone-banner {
+      background: rgba(244,164,41,.13); border: 1px solid rgba(244,164,41,.45);
+      border-radius: 14px; padding: 14px 18px; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 14px;
+      animation: glowpulse 2.2s ease-in-out infinite;
+    }
+    .milestone-banner.solverv {
+      background: rgba(96,165,250,.12); border-color: rgba(96,165,250,.45);
+      animation: glowpulse-blue 2.5s ease-in-out infinite;
+    }
+    @keyframes glowpulse {
+      0%,100%{ box-shadow: 0 0 0 0 rgba(244,164,41,.08); }
+      50%{ box-shadow: 0 0 18px 4px rgba(244,164,41,.14); }
+    }
+    @keyframes glowpulse-blue {
+      0%,100%{ box-shadow: 0 0 0 0 rgba(96,165,250,.06); }
+      50%{ box-shadow: 0 0 22px 6px rgba(96,165,250,.18); }
+    }
+    .milestone-icon { font-size: 1.9rem; flex-shrink: 0; }
+    .milestone-text h3 { color: var(--accent); font-size: 1rem; font-weight: 700; }
+    .milestone-banner.solverv .milestone-text h3 { color: #93c5fd; }
+    .milestone-text p  { color: var(--text); font-size: .82rem; margin-top: 3px; }
+
+    /* ── Cards ── */
+    .results-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 14px;
+    }
+    @media(max-width:500px){ .results-grid{ grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card); border: 1px solid var(--cborder);
+      border-radius: 14px; padding: 16px; position: relative; overflow: hidden;
+    }
+    .card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background: linear-gradient(90deg,var(--accent),var(--accent2)); opacity:.38;
+    }
+    .card.full-width { grid-column: 1 / -1; }
+    .card.green-card::before { background: linear-gradient(90deg,#4ade80,#22c55e); opacity:.55; }
+
+    .card-label {
+      font-size: .71rem; text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); font-weight: 600; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .card-label span { font-size: .88rem; }
+    .card-value { font-size: 1.65rem; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
+    .card-value.orange { color: var(--accent); }
+    .card-value.green  { color: var(--green); }
+    .card-sub { font-size: .78rem; color: var(--muted); margin-top: 5px; }
+
+    /* ── Times row ── */
+    .times-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .time-block { text-align: center; flex: 1; }
+    .time-block .lbl { font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 3px; }
+    .time-block .val  { font-size: 1.3rem; font-weight: 700; }
+    .time-block .val.rise  { color: #fbbf24; }
+    .time-block .val.set   { color: #fb923c; }
+    .time-block .val.dawn  { color: #93c5fd; }
+    .time-block .val.dusk  { color: #a78bfa; }
+    .time-divider { color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+
+    /* ── Sun arc ── */
+    .arc-card { padding: 10px !important; }
+    #sunArcCanvas { width: 100%; height: auto; display: block; border-radius: 8px; }
+
+    /* ── Sol-ansikt i header ── */
+    .sun-face-wrap {
+      position: relative; display: inline-block; margin-bottom: 10px;
+    }
+    #sunFaceCanvas { display: block; border-radius: 50%; }
+    .face-pick-btn {
+      position: absolute; bottom: 0; right: -6px;
+      background: var(--card); border: 1px solid var(--cborder);
+      border-radius: 20px; padding: 3px 9px; font-size: .68rem;
+      cursor: pointer; color: var(--muted); white-space: nowrap;
+      transition: all .2s; user-select: none;
+    }
+    .face-pick-btn:hover { background: #2a4a6e; color: var(--text); }
+
+    /* ── Export ── */
+    .export-section {
+      background: var(--card); border: 1px solid var(--cborder);
+      border-radius: 14px; padding: 14px 18px; margin-bottom: 18px;
+    }
+    .export-section h3 {
+      font-size: .72rem; text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); font-weight: 600; margin-bottom: 11px;
+    }
+
+    /* ── Polar ── */
+    .polar-card {
+      background: linear-gradient(135deg,#1a2e44,#1a3a55); border: 1px solid #2a4a6e;
+      border-radius: 14px; padding: 22px; text-align: center; margin-bottom: 14px;
+    }
+    .polar-card .icon { font-size: 2.4rem; margin-bottom: 8px; }
+    .polar-card h3 { font-size: 1.1rem; color: var(--accent); }
+    .polar-card p  { font-size: .84rem; color: var(--muted); margin-top: 5px; }
+
+    /* ── Accuracy note + source badge ── */
+    .accuracy-note {
+      font-size: .72rem; color: var(--muted); text-align: center;
+      margin-bottom: 8px; opacity: .75;
+      display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+    }
+    .source-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 2px 9px; border-radius: 20px; font-size: .7rem; font-weight: 600;
+      transition: all .3s;
+    }
+    .source-badge.api    { background: rgba(74,222,128,.15); color: #4ade80; border: 1px solid rgba(74,222,128,.3); }
+    .source-badge.noaa   { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.3); }
+    .source-badge.loading{ background: rgba(122,155,181,.1); color: var(--muted); border: 1px solid rgba(122,155,181,.2); }
+
+    .hidden { display: none !important; }
+    footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: .72rem; padding: 16px 0 28px; opacity: .65; }
+    footer a { color: var(--muted); }
+    .footer-ig { white-space: nowrap; font-weight: 600; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="sun-face-wrap">
+      <canvas id="sunFaceCanvas" width="160" height="160"></canvas>
+      <label class="face-pick-btn" for="faceImageInput" title="Velg sol-bilde">📷 Sol-bilde</label>
+      <input type="file" id="faceImageInput" accept="image/*" style="display:none">
+    </div>
+    <h1>Arntes solservice</h1>
+    <p>Dagslys, demring og solstatistikk for valgfritt sted og dato</p>
+  </header>
+
+  <!-- Input -->
+  <div class="input-panel">
+    <div class="input-row">
+      <div class="input-group">
+        <label>📅 Dato</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="input-group">
+        <label>📍 Sted</label>
+        <input type="text" id="locationInput" placeholder="f.eks. Oslo, Bergen, Tromsø …">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="handleCalculate()"><span style="font-size:1.2em">☀️</span> Solmelding</button>
+      <button class="btn-secondary" onclick="handleCurrentLocation()" title="Bruk min posisjon">📡 Min posisjon</button>
+    </div>
+  </div>
+
+  <div class="status-msg" id="statusMsg"></div>
+
+  <!-- Milestone -->
+  <div id="milestoneBanner" class="hidden"></div>
+  <div id="solvervMilestoneBanner" class="hidden"></div>
+
+  <!-- Results -->
+  <div id="mainResults" class="hidden">
+
+    <!-- Sun arc -->
+    <div class="card full-width arc-card" style="margin-bottom:11px">
+      <canvas id="sunArcCanvas" width="660" height="110"></canvas>
+    </div>
+
+    <div class="results-grid">
+
+      <!-- Dagslys -->
+      <div class="card">
+        <div class="card-label"><span>⏱</span> Dagslys i dag (tt:mm:ss)</div>
+        <div class="card-value orange" id="valDagslys">–</div>
+        <div class="card-sub" id="subDagslys"></div>
+      </div>
+
+      <!-- Mer lys enn i går -->
+      <div class="card green-card">
+        <div class="card-label"><span>📈</span> Mer lys enn i går (min:sek)</div>
+        <div class="card-value green" id="valIgar">–</div>
+        <div class="card-sub" id="subIgar"></div>
+      </div>
+
+      <!-- Mer siden solverv -->
+      <div class="card">
+        <div class="card-label"><span>❄️</span> Mer dagslys siden vintersolverv (tt:mm:ss)</div>
+        <div class="card-value orange" id="valSolverv">–</div>
+        <div class="card-sub" id="subSolverv"></div>
+      </div>
+
+      <!-- Dg siden like lyst -->
+      <div class="card">
+        <div class="card-label"><span>🔁</span> Dg siden like lyst</div>
+        <div class="card-value" id="valTilsvarende">–</div>
+        <div class="card-sub" id="subTilsvarende"></div>
+      </div>
+
+      <!-- Demring · Soloppgang · Solnedgang · Skumring -->
+      <div class="card full-width">
+        <div class="card-label"><span>🌅</span> Demring · Soloppgang · Solnedgang · Skumring</div>
+        <div class="times-row">
+          <div class="time-block">
+            <div class="lbl">Demring</div>
+            <div class="val dawn" id="valDawn">–</div>
+          </div>
+          <div class="time-divider">·</div>
+          <div class="time-block">
+            <div class="lbl">Soloppgang</div>
+            <div class="val rise" id="valSunrise">–</div>
+          </div>
+          <div class="time-divider">·</div>
+          <div class="time-block">
+            <div class="lbl">Solnedgang</div>
+            <div class="val set" id="valSunset">–</div>
+          </div>
+          <div class="time-divider">·</div>
+          <div class="time-block">
+            <div class="lbl">Skumring</div>
+            <div class="val dusk" id="valDusk">–</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /results-grid -->
+
+    <div class="accuracy-note">
+      <span id="sourceBadge" class="source-badge loading">⏳ Henter data …</span>
+      <span>tider i nettleserens tidssone</span>
+    </div>
+
+  </div><!-- /mainResults -->
+
+  <div id="polarMessage" class="hidden"></div>
+
+  <!-- Export -->
+  <div class="export-section hidden" id="exportSection">
+    <h3>Eksporter</h3>
+    <div class="btn-row">
+      <button class="btn-png"    onclick="exportPNG()">📸 Instagram-bilde (.png)</button>
+    </div>
+  </div>
+
+  <footer>
+    <span>Beregninger: <a href="https://gml.noaa.gov/grad/solcalc/" target="_blank">NOAA Solar Calculator</a> (nøyaktighet ±30 sek) ·
+    Geokoding: <a href="https://nominatim.openstreetmap.org/" target="_blank">OSM Nominatim</a></span>
+    <a class="footer-ig" href="https://www.instagram.com/arntessolservice/" target="_blank" rel="noopener">Følg @arntessolservice</a>
+  </footer>
+
+</div><!-- /app -->
+
+<canvas id="instagramCanvas" style="display:none" width="1080" height="1920"></canvas>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  NOAA SOLAR CALCULATOR
+//  Ported from NOAA's own spreadsheet/JS implementation.
+//  Accuracy: ~±17–30 sec vs timeanddate.com for Norway.
+// ════════════════════════════════════════════════════════
+const D2R = Math.PI / 180;
+
+function toJulianDay(y, mo, d) {
+  if (mo <= 2) { y -= 1; mo += 12; }
+  const A = Math.floor(y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  // noon UT: day + 0.5
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (mo + 1)) + d + 0.5 + B - 1524.5;
+}
+
+/**
+ * noaaSolar(year, month, day, lat, lng)
+ * Returns { type, sunrise, sunset, dawn, dusk, noon, daylightMs }
+ * All Date objects are UTC moments; display via toLocaleTimeString() for local time.
+ * type: 'normal' | 'polar_night' | 'midnight_sun'
+ */
+function noaaSolar(year, month, day, lat, lng) {
+  const jd = toJulianDay(year, month, day);
+  const jc = (jd - 2451545.0) / 36525.0;
+
+  // Geometric mean longitude (deg)
+  const gml = ((280.46646 + jc * (36000.76983 + jc * 0.0003032)) % 360 + 360) % 360;
+  // Geometric mean anomaly (deg)
+  const gma = 357.52911 + jc * (35999.05029 - 0.0001537 * jc);
+  // Eccentricity
+  const eoe = 0.016708634 - jc * (0.000042037 + 0.0000001267 * jc);
+
+  // Equation of center
+  const eqc = Math.sin(gma * D2R) * (1.914602 - jc * (0.004817 + 0.000014 * jc))
+            + Math.sin(2 * gma * D2R) * (0.019993 - 0.000101 * jc)
+            + Math.sin(3 * gma * D2R) * 0.000289;
+
+  const stl   = gml + eqc;
+  const omega = 125.04 - 1934.136 * jc;
+  const sal   = stl - 0.00569 - 0.00478 * Math.sin(omega * D2R); // apparent longitude
+
+  // Mean obliquity of ecliptic (deg)
+  const moe = 23 + (26 + (21.448 - jc * (46.815 + jc * (0.00059 - jc * 0.001813))) / 60) / 60;
+  const oc   = moe + 0.00256 * Math.cos(omega * D2R); // corrected obliquity
+
+  // Solar declination (deg)
+  const decl = Math.asin(Math.sin(oc * D2R) * Math.sin(sal * D2R)) / D2R;
+
+  // Equation of time (minutes)
+  const y2 = Math.pow(Math.tan(oc * D2R / 2), 2);
+  const eqtime = (4 / D2R) * (
+      y2 * Math.sin(2 * gml * D2R)
+    - 2 * eoe * Math.sin(gma * D2R)
+    + 4 * eoe * y2 * Math.sin(gma * D2R) * Math.cos(2 * gml * D2R)
+    - 0.5 * y2 * y2 * Math.sin(4 * gml * D2R)
+    - 1.25 * eoe * eoe * Math.sin(2 * gma * D2R)
+  ); // minutes
+
+  // Hour angle calculator (returns degrees, or null for polar cases)
+  function hourAngle(zenithDeg) {
+    const cosHA = Math.cos(zenithDeg * D2R) / (Math.cos(lat * D2R) * Math.cos(decl * D2R))
+                - Math.tan(lat * D2R) * Math.tan(decl * D2R);
+    if (cosHA > 1)  return { type: 'polar_night' };
+    if (cosHA < -1) return { type: 'midnight_sun' };
+    return Math.acos(cosHA) / D2R;
+  }
+
+  const ha_sun   = hourAngle(90.833); // standard sunrise/sunset (refraction + limb)
+  const ha_civil = hourAngle(96.0);   // civil twilight (-6°)
+
+  if (typeof ha_sun === 'object') {
+    return ha_sun; // { type: 'polar_night' } or { type: 'midnight_sun' }
+  }
+
+  // Solar noon = minutes from midnight UTC
+  const noonMin = 720 - 4 * lng - eqtime;
+  const riseMin = noonMin - ha_sun * 4;
+  const setMin  = noonMin + ha_sun * 4;
+
+  let dawnMin = null, duskMin = null;
+  if (typeof ha_civil === 'number') {
+    dawnMin = noonMin - ha_civil * 4;
+    duskMin = noonMin + ha_civil * 4;
+  }
+
+  // Convert to UTC Date objects
+  const baseUTC = Date.UTC(year, month - 1, day);
+  const toDate = m => (m !== null ? new Date(baseUTC + m * 60000) : null);
+
+  return {
+    type:       'normal',
+    sunrise:    toDate(riseMin),
+    sunset:     toDate(setMin),
+    noon:       toDate(noonMin),
+    dawn:       toDate(dawnMin),
+    dusk:       toDate(duskMin),
+    daylightMs: (setMin - riseMin) * 60000,
+  };
+}
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let coords   = null;   // { lat, lng, name }
+let lastData = null;
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('dateInput').value = fmtDateInput(new Date());
+  // Sol-ansikt tegnes av loadSavedFaceImage() via det andre DOMContentLoaded-lyttere nedenfor
+
+  const saved = loadSavedLocation();
+  if (saved) {
+    document.getElementById('locationInput').value = saved.name;
+    coords = saved;
+    updateSolarData();
+  }
+
+  document.getElementById('dateInput').addEventListener('change', () => {
+    if (coords) updateSolarData();
+  });
+  document.getElementById('locationInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleCalculate();
+  });
+});
+
+// ════════════════════════════════════════════════════════
+//  LOCATION
+// ════════════════════════════════════════════════════════
+function loadSavedLocation() {
+  try { const r = localStorage.getItem('solmelding_loc'); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+function saveLocation(loc) {
+  try { localStorage.setItem('solmelding_loc', JSON.stringify(loc)); } catch {}
+}
+
+async function handleCalculate() {
+  const txt = document.getElementById('locationInput').value.trim();
+  if (!txt) {
+    if (!coords) await handleCurrentLocation();
+    else updateSolarData();
+    return;
+  }
+  // Re-geocode if name changed meaningfully
+  if (!coords || !coords.name.toLowerCase().startsWith(txt.toLowerCase().split(',')[0].trim().toLowerCase())) {
+    await geocodeAndCalculate(txt);
+  } else {
+    updateSolarData();
+  }
+}
+
+async function handleCurrentLocation() {
+  showStatus('Finner din posisjon …');
+  try {
+    const r = await getCurrentPosition();
+    coords = r;
+    saveLocation(coords);
+    document.getElementById('locationInput').value = r.name;
+    updateSolarData();
+  } catch {
+    showStatus('Kunne ikke hente posisjon. Tillat posisjon i nettleseren og prøv igjen.', true);
+  }
+}
+
+async function geocodeAndCalculate(txt) {
+  showStatus('Søker etter sted …');
+  try {
+    const r = await geocode(txt);
+    coords = r;
+    saveLocation(coords);
+    document.getElementById('locationInput').value = r.name;
+    updateSolarData();
+  } catch {
+    showStatus('Fant ikke stedet. Prøv et annet stedsnavn.', true);
+  }
+}
+
+async function geocode(q) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=no`;
+  const res = await fetch(url, { headers: { 'User-Agent': 'Solmeldinger/2.0' } });
+  if (!res.ok) throw new Error('geocode failed');
+  const data = await res.json();
+  if (!data.length) throw new Error('not found');
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), name: data[0].display_name.split(',')[0].trim() };
+}
+
+async function getCurrentPosition() {
+  return new Promise((res, rej) => {
+    if (!navigator.geolocation) { rej(new Error('no geo')); return; }
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      let name = 'Din posisjon';
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=no`;
+        const r = await fetch(url, { headers: { 'User-Agent': 'Solmeldinger/2.0' } });
+        const d = await r.json();
+        name = d.address?.city || d.address?.town || d.address?.village || d.address?.county || 'Din posisjon';
+      } catch {}
+      res({ lat, lng, name });
+    }, rej, { timeout: 10000 });
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function fmtHMS(ms) {
+  if (ms === null || ms === undefined) return '–';
+  const s = Math.round(Math.abs(ms) / 1000);
+  return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;
+}
+function fmtHM(ms) {
+  if (ms === null || ms === undefined) return '–';
+  const s = Math.round(Math.abs(ms) / 1000);
+  return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}`;
+}
+function fmtSignedHMS(ms) {
+  if (ms === null || ms === undefined) return '–';
+  const sign = ms < 0 ? '−' : '+';
+  return sign + fmtHMS(Math.abs(ms));
+}
+function fmtSignedHM(ms) {
+  if (ms === null || ms === undefined) return '–';
+  const sign = ms < 0 ? '−' : '+';
+  return sign + fmtHM(Math.abs(ms));
+}
+function fmtSignedMS(ms) {
+  if (ms === null || ms === undefined) return '–';
+  const sign = ms < 0 ? '−' : '+';
+  const s = Math.round(Math.abs(ms) / 1000);
+  return `${sign}${pad(Math.floor(s/60))}:${pad(s%60)}`;
+}
+function fmtTime(date) {
+  if (!date || isNaN(date.getTime())) return '–';
+  return date.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+function fmtTimeHM(date) {
+  if (!date || isNaN(date.getTime())) return '–';
+  return date.toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' });
+}
+function fmtDateLong(date) {
+  if (!date) return '–';
+  return date.toLocaleDateString('no-NO', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function fmtDateShort(date) {
+  if (!date) return '–';
+  return date.toLocaleDateString('no-NO', { day: 'numeric', month: 'long' });
+}
+function fmtDateInput(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function getWinterSolstice(date) {
+  const y = date.getFullYear();
+  return date.getMonth() < 6
+    ? new Date(Date.UTC(y - 1, 11, 21, 12, 0, 0))
+    : new Date(Date.UTC(y,     11, 21, 12, 0, 0));
+}
+
+// Merkedager: hver halvtime dagslys fra 6:00 til 18:30
+const MILESTONES = (() => {
+  const special = {
+     720: { emoji: '🌞', note: ' – nær vårjevndøgn' },
+     840: { emoji: '🌟', note: ' – sommeren nærmer seg' },
+     960: { emoji: '🏖',  note: '' },
+    1080: { emoji: '🌅', note: ' – nesten midnattssol' },
+  };
+  const emojis = ['🌓','🌔','🌤','🌤','⛅','⛅','☀️','☀️','🌞','🌞','🌟','🌟','✨','✨','🎉','🎉','🌅','🌅','🌠','🌠','💫','💫','🎆','🎆','🌈'];
+  const entries = [];
+  for (let totalMin = 360; totalMin <= 1110; totalMin += 30) {
+    const h = Math.floor(totalMin / 60), m = totalMin % 60;
+    const hLabel = m === 0 ? `${h} timer` : `${h}½ time${h !== 1 ? 'r' : ''}`;
+    const sp = special[totalMin] || {};
+    const emoji = sp.emoji || emojis[Math.floor((totalMin - 360) / 30)] || '☀️';
+    const note  = sp.note  || '';
+    entries.push({ ms: totalMin * 60000, emoji, hLabel, label: `${hLabel} dagslys${note}!` });
+  }
+  return entries;
+})();
+
+// Merkedager: hver halvtime mer dagslys enn ved vintersolverv
+const SOLSTICE_MILESTONES = (() => {
+  const emojis = ['🌱','🌿','🌷','🌸','🌳','🦋','🌺','🌻','🌞','✨','🎉','🎊','🌈','💫','🌟','🎆'];
+  const entries = [];
+  for (let step = 1; step <= 16; step++) {
+    const totalMin = step * 30;
+    const h = Math.floor(totalMin / 60), m = totalMin % 60;
+    const hLabel = h > 0 ? `${h} t${m > 0 ? ` ${m} min` : ''}` : `${m} min`;
+    entries.push({
+      ms:    totalMin * 60000,
+      emoji: emojis[step - 1] || '☀️',
+      label: `+${hLabel} mer dagslys enn ved vintersolverv!`,
+      hLabel,
+    });
+  }
+  return entries;
+})();
+
+// ════════════════════════════════════════════════════════
+//  SOLAR APIs  (to + backup, for today's absolute times)
+// ════════════════════════════════════════════════════════
+
+
+
+function setSourceBadge(source) {
+  const el = document.getElementById('sourceBadge');
+  if (!el) return;
+  if (source === 'noaa') {
+    el.className = 'source-badge noaa';
+    el.textContent = '🟡 NOAA Solar Calculator (±30 sek)';
+  } else {
+    el.className = 'source-badge loading';
+    el.textContent = '⏳ Beregner …';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  MAIN CALCULATION & RENDER
+// ════════════════════════════════════════════════════════
+function updateSolarData() {
+  if (!coords) return;
+  clearStatus();
+  setSourceBadge('noaa');
+
+  const parts  = document.getElementById('dateInput').value.split('-');
+  const year   = parseInt(parts[0]);
+  const month  = parseInt(parts[1]);
+  const day    = parseInt(parts[2]);
+
+  const ydDate   = new Date(Date.UTC(year, month - 1, day - 1));
+  const solstice = getWinterSolstice(new Date(Date.UTC(year, month - 1, day)));
+  const yy = ydDate.getUTCFullYear(),    ym = ydDate.getUTCMonth()+1,    yd = ydDate.getUTCDate();
+  const sy = solstice.getUTCFullYear(),  sm = solstice.getUTCMonth()+1,  sd = solstice.getUTCDate();
+
+  // Alle beregninger med NOAA Solar Calculator (±17–30 sek, raskere og mer nøyaktig enn ekstern API)
+  const todayData     = noaaSolar(year, month, day, coords.lat, coords.lng);
+  const yesterdayData = noaaSolar(yy,   ym,   yd,  coords.lat, coords.lng);
+  const solsticeNOAA  = noaaSolar(sy,   sm,   sd,  coords.lat, coords.lng);
+
+  const dataSource = 'noaa';
+
+  // Handle polar conditions
+  document.getElementById('polarMessage').classList.add('hidden');
+  if (todayData.type !== 'normal') {
+    renderPolar(todayData.type, year, month, day);
+    document.getElementById('mainResults').classList.add('hidden');
+    document.getElementById('milestoneBanner').classList.add('hidden');
+    document.getElementById('solvervMilestoneBanner').classList.add('hidden');
+    document.getElementById('exportSection').classList.add('hidden');
+    return;
+  }
+
+  // Dagslys: bruk daylightMs direkte fra API/NOAA (reliable field in all sources)
+  const todayDL     = todayData.daylightMs || 0;
+  const yesterdayDL = yesterdayData.daylightMs || 0;
+  const solsticeDL  = solsticeNOAA.type === 'normal' ? solsticeNOAA.daylightMs : null;
+
+  const moreThanYesterday = todayDL - yesterdayDL;
+  const moreSinceSolstice = solsticeDL !== null ? todayDL - solsticeDL : null;
+
+  const selectedDate   = new Date(Date.UTC(year, month-1, day));
+  const daysSinceSolstice = Math.round((selectedDate - solstice) / 86400000);
+  const equivalentDate = daysSinceSolstice > 0
+    ? new Date(solstice.getTime() - daysSinceSolstice * 86400000) : null;
+  const dgSidenSist = equivalentDate
+    ? Math.round((selectedDate - equivalentDate) / 86400000) : null;
+
+  const dawnDur = (todayData.dawn) ? todayData.sunrise - todayData.dawn : null;
+  const duskDur = (todayData.dusk) ? todayData.dusk    - todayData.sunset : null;
+
+  const milestones = (yesterdayDL > 0)
+    ? MILESTONES.filter(m => todayDL >= m.ms && yesterdayDL < m.ms)
+    : [];
+
+  // Merkedager: passerte vi en halvtime-grense for mer lys enn solverv i dag?
+  const yesterdaySinceSolstice = solsticeDL !== null ? (yesterdayDL - solsticeDL) : null;
+  const solvervMilestones = (solsticeDL !== null && moreSinceSolstice !== null && yesterdaySinceSolstice !== null)
+    ? SOLSTICE_MILESTONES.filter(m => moreSinceSolstice >= m.ms && yesterdaySinceSolstice < m.ms)
+    : [];
+
+  lastData = { year, month, day, coords, todayData, solstice, daysSinceSolstice,
+               todayDL, yesterdayDL, solsticeDL, moreThanYesterday, moreSinceSolstice,
+               equivalentDate, dgSidenSist, dawnDur, duskDur, milestones, solvervMilestones, dataSource };
+
+  renderResults(lastData);
+}
+
+function renderResults(d) {
+  const td = d.todayData;
+  const selectedDate = new Date(Date.UTC(d.year, d.month-1, d.day));
+
+  // Times: hh:mm kun (sekunder ikke relevante for visning)
+  document.getElementById('valDawn').textContent    = fmtTimeHM(td.dawn);
+  document.getElementById('valSunrise').textContent = fmtTimeHM(td.sunrise);
+  document.getElementById('valSunset').textContent  = fmtTimeHM(td.sunset);
+  document.getElementById('valDusk').textContent    = fmtTimeHM(td.dusk);
+
+  // Dagslys (tt:mm:ss)
+  document.getElementById('valDagslys').textContent = fmtHMS(d.todayDL);
+  document.getElementById('subDagslys').textContent = `${d.coords.name} · ${fmtDateLong(selectedDate)}`;
+
+  // Mer enn i går (mm:ss – liten verdi, sekunder er relevante)
+  document.getElementById('valIgar').textContent = fmtSignedMS(d.moreThanYesterday);
+  const sec = d.moreThanYesterday !== null ? Math.round(d.moreThanYesterday / 1000) : 0;
+  document.getElementById('subIgar').textContent = sec >= 0
+    ? `${sec} sekunder mer enn i går` : `${Math.abs(sec)} sekunder kortere enn i går`;
+
+  // Mer siden solverv (hh:mm)
+  document.getElementById('valSolverv').textContent = fmtSignedHMS(d.moreSinceSolstice);
+  document.getElementById('subSolverv').textContent =
+    `Solverv: ${fmtDateLong(d.solstice)}`;
+
+  // Dg siden like lyst
+  if (d.equivalentDate && d.dgSidenSist !== null) {
+    document.getElementById('valTilsvarende').textContent = `${d.dgSidenSist} dager`;
+    document.getElementById('subTilsvarende').textContent =
+      `Sist like lyst: ${fmtDateShort(d.equivalentDate)}`;
+  } else if (d.daysSinceSolstice === 0) {
+    document.getElementById('valTilsvarende').textContent = 'Det ER solverv!';
+    document.getElementById('subTilsvarende').textContent = 'Korteste dagen på året';
+  } else {
+    document.getElementById('valTilsvarende').textContent = '–';
+    document.getElementById('subTilsvarende').textContent = 'Dato er før vintersolverv';
+  }
+
+  // Merkedag: absolutt dagslys passerte en hel time
+  const banner = document.getElementById('milestoneBanner');
+  if (d.milestones.length > 0) {
+    const m = d.milestones[d.milestones.length - 1];
+    banner.innerHTML = `
+      <div class="milestone-icon">${m.emoji}</div>
+      <div class="milestone-text">
+        <h3>🎉 Merkedag! ${m.label}</h3>
+        <p>I dag passerte dagslyset ${m.hLabel} for første gang i vinter!</p>
+      </div>`;
+    banner.className = 'milestone-banner';
+  } else {
+    banner.className = 'milestone-banner hidden';
+  }
+
+  // Merkedag: passerte en halvtime-grense for mer lys siden vintersolverv
+  const solvervBanner = document.getElementById('solvervMilestoneBanner');
+  if (d.solvervMilestones && d.solvervMilestones.length > 0) {
+    const sm = d.solvervMilestones[d.solvervMilestones.length - 1];
+    solvervBanner.innerHTML = `
+      <div class="milestone-icon">${sm.emoji}</div>
+      <div class="milestone-text">
+        <h3>☀️ Merkedag! ${sm.label}</h3>
+        <p>I dag passerte vi ${sm.hLabel} mer dagslys enn ved vintersolverv!</p>
+      </div>`;
+    solvervBanner.className = 'milestone-banner solverv';
+  } else {
+    solvervBanner.className = 'milestone-banner solverv hidden';
+  }
+
+  drawSunArc(td);
+  document.getElementById('mainResults').classList.remove('hidden');
+  document.getElementById('exportSection').classList.remove('hidden');
+}
+
+// ════════════════════════════════════════════════════════
+//  SUN ARC CANVAS  (visual only – uses NOAA times)
+// ════════════════════════════════════════════════════════
+function drawSunArc(td) {
+  const canvas = document.getElementById('sunArcCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#090f17'); bg.addColorStop(1, '#0d1b2a');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  if (!td.sunrise || !td.sunset) return;
+
+  const riseMs = td.sunrise.getTime(), setMs = td.sunset.getTime();
+  const dawnMs = td.dawn ? td.dawn.getTime() : riseMs - 3600000;
+  const duskMs = td.dusk ? td.dusk.getTime() : setMs  + 3600000;
+
+  const displayStart = dawnMs - 1800000;
+  const displayEnd   = duskMs + 1800000;
+  const span = displayEnd - displayStart;
+
+  const tX = t => ((t - displayStart) / span) * (W - 56) + 28;
+  const rX = tX(riseMs), sX = tX(setMs), nX = tX((riseMs + setMs) / 2);
+  const dawnX = tX(dawnMs), duskX = tX(duskMs);
+  const horizY = H - 26;
+
+  // Civil twilight shading
+  const twilGrad1 = ctx.createLinearGradient(dawnX, 0, rX, 0);
+  twilGrad1.addColorStop(0, 'rgba(147,197,253,0)');
+  twilGrad1.addColorStop(1, 'rgba(251,191,36,.14)');
+  ctx.fillStyle = twilGrad1;
+  ctx.fillRect(dawnX, horizY - 65, rX - dawnX, 65);
+
+  const twilGrad2 = ctx.createLinearGradient(sX, 0, duskX, 0);
+  twilGrad2.addColorStop(0, 'rgba(251,146,60,.14)');
+  twilGrad2.addColorStop(1, 'rgba(167,139,250,0)');
+  ctx.fillStyle = twilGrad2;
+  ctx.fillRect(sX, horizY - 65, duskX - sX, 65);
+
+  // Daylight fill
+  const dlGrad = ctx.createLinearGradient(rX, 0, sX, 0);
+  dlGrad.addColorStop(0, 'rgba(251,191,36,.07)');
+  dlGrad.addColorStop(.5,'rgba(244,164,41,.2)');
+  dlGrad.addColorStop(1, 'rgba(251,146,60,.07)');
+  ctx.fillStyle = dlGrad;
+  ctx.fillRect(rX, horizY - 72, sX - rX, 72);
+
+  // Horizon
+  ctx.strokeStyle = '#243f5a'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(18, horizY); ctx.lineTo(W - 18, horizY); ctx.stroke();
+
+  // Arc
+  const arcPeak = 20;
+  ctx.beginPath(); ctx.moveTo(rX, horizY);
+  ctx.quadraticCurveTo(nX, arcPeak, sX, horizY);
+  ctx.strokeStyle = '#f4a429'; ctx.lineWidth = 2.2; ctx.stroke();
+
+  // Current time indicator – uses face image if available
+  const now = Date.now();
+  if (now >= riseMs && now <= setMs) {
+    const nowX = tX(now);
+    const frac = (now - riseMs) / (setMs - riseMs);
+    const nowY = horizY - Math.sin(frac * Math.PI) * (horizY - arcPeak);
+    // Glow halo
+    const glow = ctx.createRadialGradient(nowX, nowY, 0, nowX, nowY, 18);
+    glow.addColorStop(0, 'rgba(244,164,41,.5)');
+    glow.addColorStop(1, 'rgba(244,164,41,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(nowX - 18, nowY - 18, 36, 36);
+    if (faceImage) {
+      const fr = 10; // radius for mini-face
+      ctx.save();
+      ctx.beginPath(); ctx.arc(nowX, nowY, fr, 0, Math.PI * 2); ctx.clip();
+      const s = Math.max(fr * 2 / faceImage.width, fr * 2 / faceImage.height);
+      ctx.drawImage(faceImage, nowX - faceImage.width * s / 2, nowY - faceImage.height * s / 2,
+                    faceImage.width * s, faceImage.height * s);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(nowX, nowY, fr, 0, Math.PI * 2);
+      ctx.strokeStyle = '#f4a429'; ctx.lineWidth = 1.5; ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.arc(nowX, nowY, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#f4a429'; ctx.fill();
+    }
+  }
+
+  // Markers
+  const dot = (x, y, color, r=3.5) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fillStyle=color; ctx.fill(); };
+  dot(rX, horizY, '#fbbf24', 4);
+  dot(sX, horizY, '#fb923c', 4);
+  dot(dawnX, horizY, '#93c5fd');
+  dot(duskX, horizY, '#a78bfa');
+
+  // Labels
+  ctx.font = '11px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  [
+    [dawnX, fmtTimeHM(td.dawn), '#93c5fd', 28],
+    [rX,    fmtTimeHM(td.sunrise), '#fbbf24', rX],
+    [sX,    fmtTimeHM(td.sunset),  '#fb923c', sX],
+    [duskX, fmtTimeHM(td.dusk),  '#a78bfa', W - 28],
+  ].forEach(([x, label, color, clamp]) => {
+    ctx.fillStyle = color;
+    ctx.fillText(label, Math.max(28, Math.min(W - 28, x)), horizY + 15);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+//  SOL-ANSIKT GRAFIKK
+// ════════════════════════════════════════════════════════
+let faceImage = null; // HTMLImageElement – satt når bruker velger bilde
+
+function drawSunFace() {
+  const canvas = document.getElementById('sunFaceCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  ctx.clearRect(0, 0, W, H);
+
+  // Mørk bakgrunn
+  ctx.fillStyle = '#0d1b2a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Sol-glow
+  const r = W * 0.33;
+  const glow = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, W * 0.5);
+  glow.addColorStop(0, 'rgba(244,164,41,.35)');
+  glow.addColorStop(1, 'rgba(244,164,41,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stråler
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.strokeStyle = 'rgba(244,164,41,.65)';
+  ctx.lineWidth = 4.5;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 12; i++) {
+    ctx.rotate(Math.PI / 6);
+    ctx.beginPath();
+    ctx.moveTo(r + 7, 0);
+    ctx.lineTo(r + 24, 0);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  if (faceImage) {
+    // Klipp til sirkel og tegn bilde (cover-fit)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+    const scale = Math.max(r * 2 / faceImage.width, r * 2 / faceImage.height);
+    const iw = faceImage.width * scale, ih = faceImage.height * scale;
+    ctx.drawImage(faceImage, cx - iw / 2, cy - ih / 2, iw, ih);
+    ctx.restore();
+    // Sirkelkant
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(244,164,41,.8)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  } else {
+    // Placeholder sol-sirkel
+    const sg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    sg.addColorStop(0, '#ffe880');
+    sg.addColorStop(0.45, '#f4a429');
+    sg.addColorStop(1, '#ff7f2a');
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = sg;
+    ctx.fill();
+    // Hint tekst
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.font = `bold ${Math.round(r * 1.3)}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('☀', cx, cy);
+  }
+}
+
+function loadSavedFaceImage() {
+  try {
+    const data = localStorage.getItem('solmelding_face');
+    if (data) {
+      const img = new Image();
+      img.onload = () => {
+        faceImage = img;
+        drawSunFace();
+        if (lastData?.todayData) drawSunArc(lastData.todayData);
+      };
+      img.src = data;
+      return;
+    }
+  } catch {}
+  drawSunFace(); // tegn placeholder
+}
+
+// File-picker for sol-bilde
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('faceImageInput');
+  if (input) {
+    input.addEventListener('change', function () {
+      const file = this.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try { localStorage.setItem('solmelding_face', ev.target.result); } catch {}
+        const img = new Image();
+        img.onload = () => {
+          faceImage = img;
+          drawSunFace();
+          if (lastData?.todayData) drawSunArc(lastData.todayData);
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  loadSavedFaceImage();
+});
+
+// ════════════════════════════════════════════════════════
+//  POLAR HANDLING
+// ════════════════════════════════════════════════════════
+function renderPolar(type, year, month, day) {
+  const date = new Date(Date.UTC(year, month-1, day));
+  const isNight = type === 'polar_night';
+  document.getElementById('polarMessage').innerHTML = `
+    <div class="polar-card">
+      <div class="icon">${isNight ? '🌑' : '🌞'}</div>
+      <h3>${isNight ? 'Polarnatt' : 'Midnattssol'}</h3>
+      <p>${isNight
+        ? `Det er polarnatt i ${coords.name} ${fmtDateLong(date)}. Solen går aldri opp.`
+        : `Det er midnattssol i ${coords.name} ${fmtDateLong(date)}. Solen går aldri ned.`
+      }</p>
+    </div>`;
+  document.getElementById('polarMessage').classList.remove('hidden');
+}
+
+// ════════════════════════════════════════════════════════
+//  STATUS
+// ════════════════════════════════════════════════════════
+function showStatus(msg, isError=false) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = 'status-msg' + (isError ? ' error' : '');
+}
+function clearStatus() {
+  const el = document.getElementById('statusMsg');
+  el.textContent = ''; el.className = 'status-msg';
+}
+
+
+// ════════════════════════════════════════════════════════
+//  INSTAGRAM PNG  (1080×1920, høydeformat)
+// ════════════════════════════════════════════════════════
+function exportPNG() {
+  if (!lastData) return;
+  const d = lastData, td = d.todayData;
+  const canvas = document.getElementById('instagramCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1920;
+  canvas.width = W; canvas.height = H;
+
+  // Transparent background – ingen bakgrunnsfyll
+
+  // Glow halo (gylden glød rundt solen)
+  const sunY = 400;
+  const halo = ctx.createRadialGradient(W/2, sunY, 0, W/2, sunY, 420);
+  halo.addColorStop(0, 'rgba(244,164,41,.32)');
+  halo.addColorStop(.5,'rgba(244,164,41,.10)');
+  halo.addColorStop(1, 'rgba(244,164,41,0)');
+  ctx.fillStyle = halo; ctx.fillRect(0, 0, W, 840);
+
+  // Sol-stråler
+  const sunR = 122;
+  ctx.save(); ctx.translate(W/2, sunY);
+  ctx.strokeStyle = 'rgba(244,164,41,.65)'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+  for (let i = 0; i < 16; i++) {
+    ctx.rotate(Math.PI / 8);
+    const len = i % 2 === 0 ? 52 : 36;
+    ctx.beginPath(); ctx.moveTo(sunR + 12, 0); ctx.lineTo(sunR + 12 + len, 0); ctx.stroke();
+  }
+  ctx.restore();
+
+  if (faceImage) {
+    // Ansikts-sol: bilde klippet til sirkel med kant
+    ctx.save();
+    ctx.beginPath(); ctx.arc(W/2, sunY, sunR, 0, Math.PI * 2); ctx.clip();
+    const s = Math.max(sunR * 2 / faceImage.width, sunR * 2 / faceImage.height);
+    const iw = faceImage.width * s, ih = faceImage.height * s;
+    ctx.drawImage(faceImage, W/2 - iw/2, sunY - ih/2, iw, ih);
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(W/2, sunY, sunR, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(244,164,41,.85)'; ctx.lineWidth = 5; ctx.stroke();
+  } else {
+    // Fallback: vanlig sol-sirkel
+    const sunGrad = ctx.createRadialGradient(W/2, sunY, 0, W/2, sunY, sunR);
+    sunGrad.addColorStop(0, '#ffe880');
+    sunGrad.addColorStop(.4,'#f4a429');
+    sunGrad.addColorStop(1, '#ff7f2a');
+    ctx.beginPath(); ctx.arc(W/2, sunY, sunR, 0, Math.PI*2);
+    ctx.fillStyle = sunGrad; ctx.fill();
+  }
+
+  // Horizon
+  const hGrad = ctx.createLinearGradient(0, 618, 0, 622);
+  hGrad.addColorStop(0, 'rgba(244,164,41,.75)');
+  hGrad.addColorStop(1, 'rgba(244,164,41,.15)');
+  ctx.fillStyle = hGrad; ctx.fillRect(60, 618, W-120, 3);
+
+  ctx.textAlign = 'center';
+
+  // Tydelig skygge på all tekst for lesbarhet på alle bakgrunner
+  ctx.shadowColor = 'rgba(0,0,0,.85)';
+  ctx.shadowBlur  = 14;
+
+  // Location
+  ctx.font = 'bold 58px -apple-system,Arial,sans-serif';
+  ctx.fillStyle = '#f4a429';
+  ctx.fillText(d.coords.name, W/2, 748);
+
+  // Date
+  ctx.font = '400 40px -apple-system,Arial,sans-serif';
+  ctx.fillStyle = '#e8f4fd';
+  const selectedDate = new Date(Date.UTC(d.year, d.month-1, d.day));
+  const dateLabel = selectedDate.toLocaleDateString('no-NO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  ctx.fillText(dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1), W/2, 806);
+
+  // Divider
+  ctx.strokeStyle = 'rgba(244,164,41,.28)'; ctx.lineWidth = 1;
+  ctx.setLineDash([9,9]);
+  ctx.beginPath(); ctx.moveTo(100,848); ctx.lineTo(W-100,848); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Big daylight
+  ctx.font = 'bold 38px -apple-system,Arial,sans-serif';
+  ctx.fillStyle = '#a0c4e0';
+  ctx.fillText('DAGSLYS', W/2, 912);
+  ctx.font = 'bold 126px -apple-system,Arial,sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(fmtHMS(d.todayDL), W/2, 1025);
+
+  // Stats
+  const c1 = W/2 - 205, c2 = W/2 + 205, rH = 140, y0 = 1082;
+  function stat(x, y, lbl, val, color='#fff') {
+    ctx.textAlign = 'center';
+    ctx.font = '500 28px -apple-system,Arial,sans-serif';
+    ctx.fillStyle = '#a0c4e0'; ctx.fillText(lbl, x, y);
+    ctx.font = 'bold 52px -apple-system,Arial,sans-serif';
+    ctx.fillStyle = color; ctx.fillText(val, x, y + 58);
+  }
+
+  stat(c1, y0,      'SOLOPPGANG', fmtTimeHM(td.sunrise), '#fbbf24');
+  stat(c2, y0,      'SOLNEDGANG', fmtTimeHM(td.sunset),  '#fb923c');
+  stat(c1, y0+rH,   'DEMRING',    fmtTimeHM(td.dawn),    '#93c5fd');
+  stat(c2, y0+rH,   'SKUMRING',   fmtTimeHM(td.dusk),    '#a78bfa');
+
+  ctx.strokeStyle = 'rgba(244,164,41,.18)'; ctx.setLineDash([7,7]);
+  ctx.beginPath(); ctx.moveTo(100, y0+rH*2+12); ctx.lineTo(W-100, y0+rH*2+12); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const y2 = y0 + rH*2 + 50;
+  stat(c1, y2,      'MER ENN I GÅR',  fmtSignedMS(d.moreThanYesterday),  '#4ade80');
+  stat(c2, y2,      'SIDEN SOLVERV',  fmtSignedHMS(d.moreSinceSolstice),  '#4ade80');
+  stat(c1, y2+rH,   'SIST LIKE LYST', d.equivalentDate
+    ? fmtDateShort(d.equivalentDate) : '–', '#e8f4fd');
+  stat(c2, y2+rH,   'DG SIDEN SIST',
+    d.dgSidenSist !== null ? `${d.dgSidenSist} dg` : '–', '#e8f4fd');
+
+  // Milestone on PNG
+  if (d.milestones.length > 0) {
+    const m = d.milestones[d.milestones.length - 1];
+    const by = y2 + rH*2 + 32;
+    ctx.fillStyle = 'rgba(244,164,41,.13)';
+    roundRect(ctx, 60, by, W-120, 96, 22); ctx.fill();
+    ctx.strokeStyle = 'rgba(244,164,41,.42)'; ctx.lineWidth = 1.5;
+    roundRect(ctx, 61, by+1, W-122, 94, 21); ctx.stroke();
+    ctx.font = 'bold 36px -apple-system,Arial,sans-serif';
+    ctx.fillStyle = '#f4a429'; ctx.textAlign = 'center';
+    ctx.fillText(`${m.emoji}  ${m.label}`, W/2, by + 56);
+  }
+
+  // Tilbakestill skygge
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+
+  // Footer
+  ctx.font = '26px -apple-system,Arial,sans-serif';
+  ctx.fillStyle = 'rgba(160,196,224,.75)';
+  ctx.fillText('Arntes solservice · NOAA Solar Calculator', W/2, H - 48);
+
+  const a = document.createElement('a');
+  a.download = `solmelding_${d.coords.name.replace(/\s+/g,'_')}_${d.year}${pad(d.month)}${pad(d.day)}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+</script>
+</body>
+</html>
