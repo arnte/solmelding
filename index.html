@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>☀️ Arntes solservice</title>
   <!--
-    v4 – beregninger: NOAA Solar Calculator (±17–30 sek fra timeanddate.com).
+    v5 – mobilfix + automatisk bildeopplasting fra face.png
   -->
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,14 +22,25 @@
       --green:    #4ade80;
     }
 
+    html { overflow-x: hidden; }
     body {
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
       min-height: 100vh;
       padding: 20px;
+      overflow-x: hidden;
     }
-    #app { max-width: 700px; margin: 0 auto; }
+    @media(max-width: 480px) {
+      body { padding: 12px; }
+      header h1 { font-size: 1.55rem; }
+      .card-value { font-size: 1.35rem; }
+      .time-block .val { font-size: 1.05rem; }
+      .time-block .lbl { font-size: .62rem; }
+      .time-divider { display: none; }
+      .times-row { gap: 4px; }
+    }
+    #app { max-width: 700px; margin: 0 auto; width: 100%; }
 
     /* ── Header ── */
     header { text-align: center; padding: 28px 0 22px; }
@@ -86,6 +97,10 @@
       background: rgba(96,165,250,.12); border-color: rgba(96,165,250,.45);
       animation: glowpulse-blue 2.5s ease-in-out infinite;
     }
+    .milestone-banner.varjevndogn {
+      background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.5);
+      animation: glowpulse-green 2.5s ease-in-out infinite;
+    }
     @keyframes glowpulse {
       0%,100%{ box-shadow: 0 0 0 0 rgba(244,164,41,.08); }
       50%{ box-shadow: 0 0 18px 4px rgba(244,164,41,.14); }
@@ -93,6 +108,10 @@
     @keyframes glowpulse-blue {
       0%,100%{ box-shadow: 0 0 0 0 rgba(96,165,250,.06); }
       50%{ box-shadow: 0 0 22px 6px rgba(96,165,250,.18); }
+    }
+    @keyframes glowpulse-green {
+      0%,100%{ box-shadow: 0 0 0 0 rgba(74,222,128,.06); }
+      50%{ box-shadow: 0 0 22px 6px rgba(74,222,128,.22); }
     }
     .milestone-icon { font-size: 1.9rem; flex-shrink: 0; }
     .milestone-text h3 { color: var(--accent); font-size: 1rem; font-weight: 700; }
@@ -147,14 +166,7 @@
       position: relative; display: inline-block; margin-bottom: 10px;
     }
     #sunFaceCanvas { display: block; border-radius: 50%; }
-    .face-pick-btn {
-      position: absolute; bottom: 0; right: -6px;
-      background: var(--card); border: 1px solid var(--cborder);
-      border-radius: 20px; padding: 3px 9px; font-size: .68rem;
-      cursor: pointer; color: var(--muted); white-space: nowrap;
-      transition: all .2s; user-select: none;
-    }
-    .face-pick-btn:hover { background: #2a4a6e; color: var(--text); }
+    /* face-pick-btn fjernet – bilde lastes fra face.png */
 
     /* ── Export ── */
     .export-section {
@@ -202,8 +214,6 @@
   <header>
     <div class="sun-face-wrap">
       <canvas id="sunFaceCanvas" width="160" height="160"></canvas>
-      <label class="face-pick-btn" for="faceImageInput" title="Velg sol-bilde">📷 Sol-bilde</label>
-      <input type="file" id="faceImageInput" accept="image/*" style="display:none">
     </div>
     <h1>Arntes solservice</h1>
     <p>Dagslys, demring og solstatistikk for valgfritt sted og dato</p>
@@ -232,6 +242,7 @@
   <!-- Milestone -->
   <div id="milestoneBanner" class="hidden"></div>
   <div id="solvervMilestoneBanner" class="hidden"></div>
+  <div id="varjevndognBanner" class="hidden"></div>
 
   <!-- Results -->
   <div id="mainResults" class="hidden">
@@ -679,6 +690,7 @@ function updateSolarData() {
     document.getElementById('mainResults').classList.add('hidden');
     document.getElementById('milestoneBanner').classList.add('hidden');
     document.getElementById('solvervMilestoneBanner').classList.add('hidden');
+    document.getElementById('varjevndognBanner').classList.add('hidden');
     document.getElementById('exportSection').classList.add('hidden');
     return;
   }
@@ -764,7 +776,7 @@ function renderResults(d) {
       <div class="milestone-icon">${m.emoji}</div>
       <div class="milestone-text">
         <h3>🎉 Merkedag! ${m.label}</h3>
-        <p>I dag passerte dagslyset ${m.hLabel} for første gang i vinter!</p>
+        <p>I dag passerte dagslyset ${m.hLabel} for første gang i ${(d.month > 3 || (d.month === 3 && d.day >= 20)) ? 'vår' : 'vinter'}!</p>
       </div>`;
     banner.className = 'milestone-banner';
   } else {
@@ -784,6 +796,20 @@ function renderResults(d) {
     solvervBanner.className = 'milestone-banner solverv';
   } else {
     solvervBanner.className = 'milestone-banner solverv hidden';
+  }
+
+  // Vårjevndøgn (20. mars)
+  const varjevndognBanner = document.getElementById('varjevndognBanner');
+  if (d.month === 3 && d.day === 20) {
+    varjevndognBanner.innerHTML = `
+      <div class="milestone-icon">🌸</div>
+      <div class="milestone-text">
+        <h3>🎉 HURRA! Vårjevndøgn!</h3>
+        <p>Dag og natt er like lange – og det lyseste halvåret starter nå. Den mørkeste tiden er over! 🌱☀️</p>
+      </div>`;
+    varjevndognBanner.className = 'milestone-banner varjevndogn';
+  } else {
+    varjevndognBanner.className = 'milestone-banner varjevndogn hidden';
   }
 
   drawSunArc(td);
@@ -974,43 +1000,41 @@ function drawSunFace() {
 }
 
 function loadSavedFaceImage() {
-  try {
-    const data = localStorage.getItem('solmelding_face');
-    if (data) {
-      const img = new Image();
-      img.onload = () => {
-        faceImage = img;
-        drawSunFace();
-        if (lastData?.todayData) drawSunArc(lastData.todayData);
-      };
-      img.src = data;
-      return;
-    }
-  } catch {}
-  drawSunFace(); // tegn placeholder
-}
-
-// File-picker for sol-bilde
-document.addEventListener('DOMContentLoaded', () => {
-  const input = document.getElementById('faceImageInput');
-  if (input) {
-    input.addEventListener('change', function () {
-      const file = this.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        try { localStorage.setItem('solmelding_face', ev.target.result); } catch {}
+  // 1) Prøv å laste face.png fra samme mappe som index.html
+  const embedded = new Image();
+  embedded.onload = () => {
+    faceImage = embedded;
+    try { localStorage.setItem('solmelding_face', (() => {
+      const c = document.createElement('canvas');
+      c.width = embedded.width; c.height = embedded.height;
+      c.getContext('2d').drawImage(embedded, 0, 0);
+      return c.toDataURL();
+    })()); } catch {}
+    drawSunFace();
+    if (lastData?.todayData) drawSunArc(lastData.todayData);
+  };
+  embedded.onerror = () => {
+    // 2) Fallback: localStorage (tidligere valgt bilde)
+    try {
+      const data = localStorage.getItem('solmelding_face');
+      if (data) {
         const img = new Image();
         img.onload = () => {
           faceImage = img;
           drawSunFace();
           if (lastData?.todayData) drawSunArc(lastData.todayData);
         };
-        img.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  }
+        img.src = data;
+        return;
+      }
+    } catch {}
+    drawSunFace(); // tegn placeholder-sol
+  };
+  embedded.src = 'face.png';
+}
+
+// File-picker for sol-bilde
+document.addEventListener('DOMContentLoaded', () => {
   loadSavedFaceImage();
 });
 
