@@ -40,9 +40,10 @@
       .time-divider { display: none; }
       .times-row { gap: 4px; }
       .input-row { display: flex; gap: 8px; flex-wrap: nowrap; }
-      .input-group { flex: 1 1 0; min-width: 0; }
+      .input-group { flex: 1 1 0; min-width: 0; width: 0; }
       .input-panel { padding: 14px; overflow: hidden; }
-      input[type="date"], input[type="text"] { width: 100%; min-width: 0; box-sizing: border-box; font-size: .88rem; padding: 9px 8px; }
+      input[type="date"], input[type="text"] { width: 100%; min-width: 0; box-sizing: border-box; font-size: .88rem; padding: 9px 8px; overflow: hidden; }
+      input[type="date"] { font-size: .78rem; }
     }
     #app { max-width: 700px; margin: 0 auto; width: 100%; }
 
