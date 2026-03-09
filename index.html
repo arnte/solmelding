@@ -39,8 +39,9 @@
       .time-block .lbl { font-size: .62rem; }
       .time-divider { display: none; }
       .times-row { gap: 4px; }
-      .input-row { flex-direction: column; }
-      .input-group { min-width: 0; width: 100%; flex: none; }
+      .input-row { display: block; }
+      .input-group { width: 100%; min-width: 0; flex: none; margin-bottom: 8px; }
+      .input-group:last-child { margin-bottom: 0; }
       .input-panel { padding: 14px; overflow: hidden; }
       input[type="date"], input[type="text"] { display: block; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
     }
@@ -64,7 +65,7 @@
     .input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 155px; }
     .input-group label {
       font-size: .72rem; text-transform: uppercase; letter-spacing: .07em;
-      color: var(--muted); font-weight: 600;
+      color: #b8d0e8; font-weight: 600;
     }
     input[type="date"], input[type="text"] {
       background: #0d1b2a; border: 1px solid #2a4a6e; border-radius: 10px;
