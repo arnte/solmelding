@@ -39,11 +39,6 @@
       .time-block .lbl { font-size: .62rem; }
       .time-divider { display: none; }
       .times-row { gap: 4px; }
-      .input-row { display: flex; gap: 8px; flex-wrap: nowrap; }
-      .input-group { flex: 1 1 0; min-width: 0; width: 0; }
-      .input-panel { padding: 14px; overflow: hidden; }
-      input[type="date"], input[type="text"] { width: 100%; min-width: 0; box-sizing: border-box; font-size: .88rem; padding: 9px 8px; overflow: hidden; }
-      input[type="date"] { font-size: .68rem; padding: 9px 5px; }
     }
     #app { max-width: 700px; margin: 0 auto; width: 100%; }
 
@@ -65,7 +60,7 @@
     .input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 155px; }
     .input-group label {
       font-size: .72rem; text-transform: uppercase; letter-spacing: .07em;
-      color: #b8d0e8; font-weight: 600;
+      color: var(--muted); font-weight: 600;
     }
     input[type="date"], input[type="text"] {
       background: #0d1b2a; border: 1px solid #2a4a6e; border-radius: 10px;
@@ -142,7 +137,7 @@
 
     .card-label {
       font-size: .71rem; text-transform: uppercase; letter-spacing: .07em;
-      color: #b8d0e8; font-weight: 600; margin-bottom: 7px;
+      color: var(--muted); font-weight: 600; margin-bottom: 7px;
       display: flex; align-items: center; gap: 5px;
     }
     .card-label span { font-size: .88rem; }
@@ -221,7 +216,7 @@
       <canvas id="sunFaceCanvas" width="160" height="160"></canvas>
     </div>
     <h1>Arntes solservice</h1>
-    <p>Dagslys, demring og solstatistikk i mørketida</p>
+    <p>Dagslys, demring og solstatistikk for valgfritt sted og dato</p>
   </header>
 
   <!-- Input -->
