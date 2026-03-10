@@ -278,7 +278,7 @@
 
       <!-- Mer/mindre sol enn i går -->
       <div class="card green-card">
-        <div class="card-label" id="labelIgar"><span id="iconIgar">📈</span> Mer sol enn i går (mm:ss)</div>
+        <div class="card-label" id="labelIgar"><span id="iconIgar">📈</span> Sol siden i går (mm:ss)</div>
         <div class="card-value green" id="valIgar">–</div>
         <div class="card-sub" id="subIgar"></div>
       </div>
@@ -792,9 +792,9 @@ function renderResults(d) {
   if (igarLabel && d.moreThanYesterday !== null) {
     if (d.moreThanYesterday >= 0) {
       igarIcon.textContent  = '📈';
-      igarLabel.innerHTML   = '<span id="iconIgar">📈</span> Mer sol enn i går (mm:ss)';
+      igarLabel.innerHTML   = '<span id="iconIgar">📈</span> Sol siden i går (mm:ss)';
     } else {
-      igarLabel.innerHTML   = '<span id="iconIgar">📉</span> Mindre sol enn i går (mm:ss)';
+      igarLabel.innerHTML   = '<span id="iconIgar">📉</span> Sol siden i går (mm:ss)';
     }
   }
 
