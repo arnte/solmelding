@@ -1216,17 +1216,33 @@ function exportPNG() {
   stat(c2, y2+rH,   'DG SIDEN SIST',
     d.dgSidenSist !== null ? `${d.dgSidenSist} dg` : '–', '#e8f4fd');
 
-  // Milestone on PNG
-  if (d.milestones.length > 0) {
-    const m = d.milestones[d.milestones.length - 1];
-    const by = y2 + rH*2 + 32;
-    ctx.fillStyle = 'rgba(244,164,41,.13)';
+  // Merkedager på PNG – alle tre typer stables vertikalt
+  function drawMilestoneBanner(by, emoji, text, bgColor, borderColor, textColor) {
+    ctx.fillStyle = bgColor;
     roundRect(ctx, 60, by, W-120, 96, 22); ctx.fill();
-    ctx.strokeStyle = 'rgba(244,164,41,.42)'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = borderColor; ctx.lineWidth = 1.5;
     roundRect(ctx, 61, by+1, W-122, 94, 21); ctx.stroke();
-    ctx.font = 'bold 36px -apple-system,Arial,sans-serif';
-    ctx.fillStyle = '#f4a429'; ctx.textAlign = 'center';
-    ctx.fillText(`${m.emoji}  ${m.label}`, W/2, by + 56);
+    ctx.font = 'bold 34px -apple-system,Arial,sans-serif';
+    ctx.fillStyle = textColor; ctx.textAlign = 'center';
+    ctx.fillText(`${emoji}  ${text}`, W/2, by + 56);
+  }
+  let bannerY = y2 + rH*2 + 32;
+  const bannerH = 112;
+  if (d.milestones && d.milestones.length > 0) {
+    const m = d.milestones[d.milestones.length - 1];
+    drawMilestoneBanner(bannerY, m.emoji, m.label,
+      'rgba(244,164,41,.13)', 'rgba(244,164,41,.42)', '#f4a429');
+    bannerY += bannerH;
+  }
+  if (d.solvervMilestones && d.solvervMilestones.length > 0) {
+    const sm = d.solvervMilestones[d.solvervMilestones.length - 1];
+    drawMilestoneBanner(bannerY, sm.emoji, sm.label,
+      'rgba(96,165,250,.12)', 'rgba(96,165,250,.45)', '#93c5fd');
+    bannerY += bannerH;
+  }
+  if (d.month === 3 && d.day === 20) {
+    drawMilestoneBanner(bannerY, '🌸', 'HURRA! Vårjevndøgn! Den mørkeste tiden er over! 🌱',
+      'rgba(74,222,128,.12)', 'rgba(74,222,128,.5)', '#4ade80');
   }
 
   // Tilbakestill skygge
