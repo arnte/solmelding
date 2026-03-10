@@ -19,7 +19,7 @@ En enkel webapp som viser solstatistikk for valgfritt sted og dato i Norge.
 
 ## Nøyaktighet
 
-Beregningene bruker [NOAA Solar Calculator](https://gml.noaa.gov/grad/solcalc/)-algoritmen og er nøyaktig til ±10–20 sekunder sammenlignet med timeanddate.com for norske breddegrader (som er litt ekstra krevende).
+Beregningene bruker [NOAA Solar Calculator](https://gml.noaa.gov/grad/solcalc/)-algoritmen og er nøyaktig til ±10–20 sekunder sammenlignet med timeanddate.com for norske breddegrader (som er litt ekstra krevende fordi vi bor i gokk).
 
 ## Bruk
 
