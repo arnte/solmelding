@@ -13,7 +13,7 @@ En enkel webapp som viser solstatistikk for valgfritt sted og dato i Norge.
 - **Merkedager** – banner vises når dagslyset passerer en halvtime-grense
 - **Visuell solbane** over horisonten
 - **Sol-grafikk** av Arnte tegnet av Oda 10 år <3
-- **Instagram-eksport** – last ned 1080×1920 px PNG med gjennomsiktig bakgrunn
+- **Instagram-eksport** – last ned 1080×1920 px PNG med gjennomsiktig bakgrunn slik at det ev. kan legges oppå annet bilde
 - Husker **siste posisjon** (localStorage)
 - Fungerer **offline** (NOAA-algoritme, ingen ekstern API)
 
