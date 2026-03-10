@@ -211,9 +211,9 @@
     .source-badge.loading{ background: rgba(122,155,181,.1); color: var(--muted); border: 1px solid rgba(122,155,181,.2); }
 
     .hidden { display: none !important; }
-    footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--muted); font-size: .72rem; padding: 16px 0 28px; opacity: .65; }
-    footer a { color: var(--muted); }
-    .footer-ig { white-space: nowrap; font-weight: 600; }
+    footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; color: #9ab8d0; font-size: .72rem; padding: 16px 0 28px; opacity: .85; }
+    footer a { color: #9ab8d0; }
+    .footer-ig { white-space: nowrap; font-weight: 800; color: #c8dff0; font-size: .78rem; }
   </style>
 </head>
 <body>
@@ -269,18 +269,18 @@
         <div class="card-sub" id="subDagslys"></div>
       </div>
 
-      <!-- Mer lys enn i går -->
-      <div class="card green-card">
-        <div class="card-label"><span>📈</span> Mer lys enn i går (min:sek)</div>
-        <div class="card-value green" id="valIgar">–</div>
-        <div class="card-sub" id="subIgar"></div>
-      </div>
-
       <!-- Mer siden solverv -->
       <div class="card">
-        <div class="card-label"><span>❄️</span> Mer dagslys siden vintersolverv (tt:mm:ss)</div>
+        <div class="card-label"><span>❄️</span> Sol siden vintersolverv (tt:mm:ss)</div>
         <div class="card-value orange" id="valSolverv">–</div>
         <div class="card-sub" id="subSolverv"></div>
+      </div>
+
+      <!-- Mer/mindre sol enn i går -->
+      <div class="card green-card">
+        <div class="card-label" id="labelIgar"><span id="iconIgar">📈</span> Mer sol enn i går (mm:ss)</div>
+        <div class="card-value green" id="valIgar">–</div>
+        <div class="card-sub" id="subIgar"></div>
       </div>
 
       <!-- Dg siden like lyst -->
@@ -292,7 +292,7 @@
 
       <!-- Demring · Soloppgang · Solnedgang · Skumring -->
       <div class="card full-width">
-        <div class="card-label"><span>🌅</span> Demring · Soloppgang · Solnedgang · Skumring</div>
+        <div class="card-label"><span>🌅</span> Soloppgang · Solnedgang</div>
         <div class="times-row">
           <div class="time-block">
             <div class="lbl">Demring</div>
@@ -602,11 +602,20 @@ function fmtDateInput(d) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
 
-function getWinterSolstice(date) {
-  const y = date.getFullYear();
-  return date.getMonth() < 6
-    ? new Date(Date.UTC(y - 1, 11, 21, 12, 0, 0))
-    : new Date(Date.UTC(y,     11, 21, 12, 0, 0));
+function getWinterSolstice(forDate) {
+  // Meeus "Astronomical Algorithms" Table 27.a – December solstice
+  function decSolstice(yr) {
+    const Y = (yr - 2000) / 1000;
+    const JDE = 2451900.05 + 365242.74049*Y - 0.06223*Y*Y - 0.00823*Y*Y*Y + 0.00032*Y*Y*Y*Y;
+    const ms  = (JDE - 2440587.5) * 86400000; // JDE → Unix ms
+    const d   = new Date(ms);
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0));
+  }
+  const y = forDate.getUTCFullYear();
+  const thisSolstice = decSolstice(y);
+  const forDay = new Date(Date.UTC(forDate.getUTCFullYear(), forDate.getUTCMonth(), forDate.getUTCDate()));
+  const solDay = new Date(Date.UTC(thisSolstice.getUTCFullYear(), thisSolstice.getUTCMonth(), thisSolstice.getUTCDate()));
+  return forDay < solDay ? decSolstice(y - 1) : thisSolstice;
 }
 
 // Merkedager: hver halvtime dagslys fra 6:00 til 18:30
@@ -777,6 +786,18 @@ function renderResults(d) {
   }
 
   // Merkedag: absolutt dagslys passerte en hel time
+  // Dynamic label for "i går"-card
+  const igarLabel = document.getElementById('labelIgar');
+  const igarIcon  = document.getElementById('iconIgar');
+  if (igarLabel && d.moreThanYesterday !== null) {
+    if (d.moreThanYesterday >= 0) {
+      igarIcon.textContent  = '📈';
+      igarLabel.innerHTML   = '<span id="iconIgar">📈</span> Mer sol enn i går (mm:ss)';
+    } else {
+      igarLabel.innerHTML   = '<span id="iconIgar">📉</span> Mindre sol enn i går (mm:ss)';
+    }
+  }
+
   const banner = document.getElementById('milestoneBanner');
   if (d.milestones.length > 0) {
     const m = d.milestones[d.milestones.length - 1];
