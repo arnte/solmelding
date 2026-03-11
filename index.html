@@ -224,7 +224,7 @@
       <canvas id="sunFaceCanvas" width="160" height="160"></canvas>
     </div>
     <h1>Arntes solservice</h1>
-    <p>Dagslys, demring og solstatistikk i mørketida</p>
+    <p>Dagslys, solstatistikk og merkedager i mørketida</p>
   </header>
 
   <!-- Input -->
@@ -269,23 +269,23 @@
         <div class="card-sub" id="subDagslys"></div>
       </div>
 
-      <!-- Mer siden solverv -->
+      <!-- Sol siden vintersolverv -->
       <div class="card">
         <div class="card-label"><span>❄️</span> Sol siden vintersolverv (tt:mm:ss)</div>
         <div class="card-value orange" id="valSolverv">–</div>
         <div class="card-sub" id="subSolverv"></div>
       </div>
 
-      <!-- Mer/mindre sol enn i går -->
+      <!-- Sol siden i går -->
       <div class="card green-card">
         <div class="card-label" id="labelIgar"><span id="iconIgar">📈</span> Sol siden i går (mm:ss)</div>
         <div class="card-value green" id="valIgar">–</div>
         <div class="card-sub" id="subIgar"></div>
       </div>
 
-      <!-- Sist like lyst -->
+      <!-- Dg siden like lyst -->
       <div class="card">
-        <div class="card-label"><span>🔁</span> Sist like lyst</div>
+        <div class="card-label"><span>🔁</span> Dg siden like lyst</div>
         <div class="card-value" id="valTilsvarende">–</div>
         <div class="card-sub" id="subTilsvarende"></div>
       </div>
@@ -603,11 +603,10 @@ function fmtDateInput(d) {
 }
 
 function getWinterSolstice(forDate) {
-  // Meeus "Astronomical Algorithms" Table 27.a – December solstice
   function decSolstice(yr) {
     const Y = (yr - 2000) / 1000;
     const JDE = 2451900.05 + 365242.74049*Y - 0.06223*Y*Y - 0.00823*Y*Y*Y + 0.00032*Y*Y*Y*Y;
-    const ms  = (JDE - 2440587.5) * 86400000; // JDE → Unix ms
+    const ms  = (JDE - 2440587.5) * 86400000;
     const d   = new Date(ms);
     return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0));
   }
@@ -788,13 +787,11 @@ function renderResults(d) {
   // Merkedag: absolutt dagslys passerte en hel time
   // Dynamic label for "i går"-card
   const igarLabel = document.getElementById('labelIgar');
-  const igarIcon  = document.getElementById('iconIgar');
   if (igarLabel && d.moreThanYesterday !== null) {
     if (d.moreThanYesterday >= 0) {
-      igarIcon.textContent  = '📈';
-      igarLabel.innerHTML   = '<span id="iconIgar">📈</span> Sol siden i går (mm:ss)';
+      igarLabel.innerHTML = '<span id="iconIgar">📈</span> Sol siden i går (mm:ss)';
     } else {
-      igarLabel.innerHTML   = '<span id="iconIgar">📉</span> Sol siden i går (mm:ss)';
+      igarLabel.innerHTML = '<span id="iconIgar">📉</span> Sol siden i går (mm:ss)';
     }
   }
 
@@ -1201,9 +1198,9 @@ function exportPNG() {
   ctx.setLineDash([]);
 
   const y2 = y0 + rH*2 + 28;
-  stat(c1, y2,      'MER ENN I GÅR',  fmtSignedMS(d.moreThanYesterday),  '#4ade80');
+  stat(c1, y2,      'SOL SIDEN I GÅR',  fmtSignedMS(d.moreThanYesterday),  '#4ade80');
   stat(c2, y2,      'SIDEN SOLVERV',  fmtSignedHMS(d.moreSinceSolstice),  '#4ade80');
-  stat(c1, y2+rH,   'LIKE LYST', d.equivalentDate
+  stat(c1, y2+rH,   'SIST LIKE LYST', d.equivalentDate
     ? fmtDateShort(d.equivalentDate) : '–', '#e8f4fd');
   stat(c2, y2+rH,   'DAGER SIDEN',
     d.dgSidenSist !== null ? `${d.dgSidenSist} dager` : '–', '#e8f4fd');
