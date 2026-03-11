@@ -283,9 +283,9 @@
         <div class="card-sub" id="subIgar"></div>
       </div>
 
-      <!-- Dg siden like lyst -->
+      <!-- Like lyst? -->
       <div class="card">
-        <div class="card-label"><span>🔁</span> Dg siden like lyst</div>
+        <div class="card-label"><span>🔁</span> Like lyst</div>
         <div class="card-value" id="valTilsvarende">–</div>
         <div class="card-sub" id="subTilsvarende"></div>
       </div>
@@ -771,7 +771,7 @@ function renderResults(d) {
   document.getElementById('subSolverv').textContent =
     `Solverv: ${fmtDateLong(d.solstice)}`;
 
-  // Dg siden like lyst
+  // Dag siden like lyst
   if (d.equivalentDate && d.dgSidenSist !== null) {
     document.getElementById('valTilsvarende').textContent = `${d.dgSidenSist} dager siden`;
     document.getElementById('subTilsvarende').textContent =
