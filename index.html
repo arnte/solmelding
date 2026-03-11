@@ -283,9 +283,9 @@
         <div class="card-sub" id="subIgar"></div>
       </div>
 
-      <!-- Dg siden like lyst -->
+      <!-- Sist like lyst -->
       <div class="card">
-        <div class="card-label"><span>🔁</span> Dg siden like lyst</div>
+        <div class="card-label"><span>🔁</span> Sist like lyst</div>
         <div class="card-value" id="valTilsvarende">–</div>
         <div class="card-sub" id="subTilsvarende"></div>
       </div>
@@ -774,9 +774,9 @@ function renderResults(d) {
 
   // Dg siden like lyst
   if (d.equivalentDate && d.dgSidenSist !== null) {
-    document.getElementById('valTilsvarende').textContent = `${d.dgSidenSist} dager`;
+    document.getElementById('valTilsvarende').textContent = `${d.dgSidenSist} dager siden`;
     document.getElementById('subTilsvarende').textContent =
-      `Sist like lyst: ${fmtDateShort(d.equivalentDate)}`;
+      `Like lyst før vintersolverv: ${fmtDateShort(d.equivalentDate)}`;
   } else if (d.daysSinceSolstice === 0) {
     document.getElementById('valTilsvarende').textContent = 'Det ER solverv!';
     document.getElementById('subTilsvarende').textContent = 'Korteste dagen på året';
@@ -1211,10 +1211,10 @@ function exportPNG() {
   const y2 = y0 + rH*2 + 50;
   stat(c1, y2,      'MER ENN I GÅR',  fmtSignedMS(d.moreThanYesterday),  '#4ade80');
   stat(c2, y2,      'SIDEN SOLVERV',  fmtSignedHMS(d.moreSinceSolstice),  '#4ade80');
-  stat(c1, y2+rH,   'SIST LIKE LYST', d.equivalentDate
+  stat(c1, y2+rH,   'LIKE LYST', d.equivalentDate
     ? fmtDateShort(d.equivalentDate) : '–', '#e8f4fd');
-  stat(c2, y2+rH,   'DG SIDEN SIST',
-    d.dgSidenSist !== null ? `${d.dgSidenSist} dg` : '–', '#e8f4fd');
+  stat(c2, y2+rH,   'DAGER SIDEN',
+    d.dgSidenSist !== null ? `${d.dgSidenSist} dager` : '–', '#e8f4fd');
 
   // Merkedager på PNG – alle tre typer stables vertikalt
   function drawMilestoneBanner(by, emoji, text, bgColor, borderColor, textColor) {
