@@ -625,7 +625,11 @@ function getSummerSolstice(forDate) {
     const d   = new Date(ms);
     return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0));
   }
-  return junSolstice(forDate.getUTCFullYear());
+  const y = forDate.getUTCFullYear();
+  const thisSolstice = junSolstice(y);
+  const forDay = new Date(Date.UTC(forDate.getUTCFullYear(), forDate.getUTCMonth(), forDate.getUTCDate()));
+  const solDay = new Date(Date.UTC(thisSolstice.getUTCFullYear(), thisSolstice.getUTCMonth(), thisSolstice.getUTCDate()));
+  return forDay < solDay ? junSolstice(y - 1) : thisSolstice;
 }
 
 // Merkedager: hver halvtime dagslys fra 6:00 til 18:30
@@ -791,11 +795,13 @@ function renderResults(d) {
     `Solverv: ${fmtDateLong(d.solstice)}`;
 
   // Dag siden like lyst
-  if (d.daysSinceSummerSolstice > 0 && d.equivalentDateSummer) {
+  // Finn hvilken solverv som er nærmest (nyligst) bak i tid
+  const summerIsMoreRecent = d.summerSolstice > d.solstice;
+  if (summerIsMoreRecent && d.daysSinceSummerSolstice > 0 && d.equivalentDateSummer) {
     document.getElementById('valTilsvarende').textContent = `${d.dgSidenSistSommer} dager siden`;
     document.getElementById('subTilsvarende').textContent =
       `Like lyst før sommersolverv: ${fmtDateShort(d.equivalentDateSummer)}`;
-  } else if (d.daysSinceSummerSolstice === 0) {
+  } else if (summerIsMoreRecent && d.daysSinceSummerSolstice === 0) {
     document.getElementById('valTilsvarende').textContent = 'Det ER sommersolverv!';
     document.getElementById('subTilsvarende').textContent = 'Lengste dagen på året';
   } else if (d.equivalentDate && d.dgSidenSist !== null) {
