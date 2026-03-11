@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>☀️ Arntes solservice</title>
+  <title>☀️Arntes solservice</title>
   <!--
     v5 – mobilfix + automatisk bildeopplasting fra face.png
   -->
@@ -122,7 +122,7 @@
       50%{ box-shadow: 0 0 22px 6px rgba(74,222,128,.22); }
     }
     .milestone-icon { font-size: 1.9rem; flex-shrink: 0; }
-    .milestone-text h3 { color: #ffffff; font-size: 1.08rem; font-weight: 700; }
+    .milestone-text h3 { color: var(--accent); font-size: 1rem; font-weight: 700; }
     .milestone-banner.solverv .milestone-text h3 { color: #93c5fd; }
     .milestone-text p  { color: var(--text); font-size: .82rem; margin-top: 3px; }
 
@@ -224,7 +224,7 @@
       <canvas id="sunFaceCanvas" width="160" height="160"></canvas>
     </div>
     <h1>Arntes solservice</h1>
-    <p>Dagslys, solstatistikk og merkedager i mørketida</p>
+    <p>Dagslys, demring og solstatistikk i mørketida</p>
   </header>
 
   <!-- Input -->
@@ -269,23 +269,23 @@
         <div class="card-sub" id="subDagslys"></div>
       </div>
 
-      <!-- Sol siden vintersolverv -->
+      <!-- Mer siden solverv -->
       <div class="card">
         <div class="card-label"><span>❄️</span> Sol siden vintersolverv (tt:mm:ss)</div>
         <div class="card-value orange" id="valSolverv">–</div>
         <div class="card-sub" id="subSolverv"></div>
       </div>
 
-      <!-- Sol siden i går -->
+      <!-- Mer/mindre sol enn i går -->
       <div class="card green-card">
-        <div class="card-label" id="labelIgar"><span id="iconIgar">📈</span> Sol siden i går (mm:ss)</div>
+        <div class="card-label" id="labelIgar"><span id="iconIgar">📈</span> Mer sol enn i går (mm:ss)</div>
         <div class="card-value green" id="valIgar">–</div>
         <div class="card-sub" id="subIgar"></div>
       </div>
 
-      <!-- Dg siden like lyst -->
+      <!-- Dagerg siden like lyst -->
       <div class="card">
-        <div class="card-label"><span>🔁</span> Dg siden like lyst</div>
+        <div class="card-label"><span>🔁</span> Dager siden like lyst</div>
         <div class="card-value" id="valTilsvarende">–</div>
         <div class="card-sub" id="subTilsvarende"></div>
       </div>
@@ -603,10 +603,11 @@ function fmtDateInput(d) {
 }
 
 function getWinterSolstice(forDate) {
+  // Meeus "Astronomical Algorithms" Table 27.a – December solstice
   function decSolstice(yr) {
     const Y = (yr - 2000) / 1000;
     const JDE = 2451900.05 + 365242.74049*Y - 0.06223*Y*Y - 0.00823*Y*Y*Y + 0.00032*Y*Y*Y*Y;
-    const ms  = (JDE - 2440587.5) * 86400000;
+    const ms  = (JDE - 2440587.5) * 86400000; // JDE → Unix ms
     const d   = new Date(ms);
     return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0));
   }
@@ -773,9 +774,9 @@ function renderResults(d) {
 
   // Dg siden like lyst
   if (d.equivalentDate && d.dgSidenSist !== null) {
-    document.getElementById('valTilsvarende').textContent = `${d.dgSidenSist} dager siden`;
+    document.getElementById('valTilsvarende').textContent = `${d.dgSidenSist} dager`;
     document.getElementById('subTilsvarende').textContent =
-      `Like lyst før vintersolverv: ${fmtDateShort(d.equivalentDate)}`;
+      `Sist like lyst: ${fmtDateShort(d.equivalentDate)}`;
   } else if (d.daysSinceSolstice === 0) {
     document.getElementById('valTilsvarende').textContent = 'Det ER solverv!';
     document.getElementById('subTilsvarende').textContent = 'Korteste dagen på året';
@@ -787,11 +788,13 @@ function renderResults(d) {
   // Merkedag: absolutt dagslys passerte en hel time
   // Dynamic label for "i går"-card
   const igarLabel = document.getElementById('labelIgar');
+  const igarIcon  = document.getElementById('iconIgar');
   if (igarLabel && d.moreThanYesterday !== null) {
     if (d.moreThanYesterday >= 0) {
-      igarLabel.innerHTML = '<span id="iconIgar">📈</span> Sol siden i går (mm:ss)';
+      igarIcon.textContent  = '📈';
+      igarLabel.innerHTML   = '<span id="iconIgar">📈</span> Mer sol enn i går (mm:ss)';
     } else {
-      igarLabel.innerHTML = '<span id="iconIgar">📉</span> Sol siden i går (mm:ss)';
+      igarLabel.innerHTML   = '<span id="iconIgar">📉</span> Mindre sol enn i går (mm:ss)';
     }
   }
 
@@ -801,7 +804,8 @@ function renderResults(d) {
     banner.innerHTML = `
       <div class="milestone-icon">${m.emoji}</div>
       <div class="milestone-text">
-        <h3>🎉 Merkedag! ${m.label} ☀️</h3>
+        <h3>🎉 Merkedag! ${m.label}</h3>
+        <p>I dag passerte dagslyset ${m.hLabel} for første gang i ${(d.month > 3 || (d.month === 3 && d.day >= 20)) ? 'vår' : 'vinter'}!</p>
       </div>`;
     banner.className = 'milestone-banner';
   } else {
@@ -815,7 +819,8 @@ function renderResults(d) {
     solvervBanner.innerHTML = `
       <div class="milestone-icon">${sm.emoji}</div>
       <div class="milestone-text">
-        <h3>☀️ Merkedag! ${sm.label} ☀️</h3>
+        <h3>☀️ Merkedag! ${sm.label}</h3>
+        <p>I dag passerte vi ${sm.hLabel} mer dagslys enn ved vintersolverv!</p>
       </div>`;
     solvervBanner.className = 'milestone-banner solverv';
   } else {
@@ -1146,40 +1151,46 @@ function exportPNG() {
     ctx.fillStyle = sunGrad; ctx.fill();
   }
 
+  // Horizon
+  const hGrad = ctx.createLinearGradient(0, 618, 0, 622);
+  hGrad.addColorStop(0, 'rgba(244,164,41,.75)');
+  hGrad.addColorStop(1, 'rgba(244,164,41,.15)');
+  ctx.fillStyle = hGrad; ctx.fillRect(60, 618, W-120, 3);
+
   ctx.textAlign = 'center';
 
   // Tydelig skygge på all tekst for lesbarhet på alle bakgrunner
   ctx.shadowColor = 'rgba(0,0,0,.85)';
   ctx.shadowBlur  = 14;
 
-  // Location – tett under solen
+  // Location
   ctx.font = 'bold 58px -apple-system,Arial,sans-serif';
   ctx.fillStyle = '#f4a429';
-  ctx.fillText(d.coords.name, W/2, 648);
+  ctx.fillText(d.coords.name, W/2, 748);
 
   // Date
   ctx.font = '400 40px -apple-system,Arial,sans-serif';
   ctx.fillStyle = '#e8f4fd';
   const selectedDate = new Date(Date.UTC(d.year, d.month-1, d.day));
   const dateLabel = selectedDate.toLocaleDateString('no-NO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  ctx.fillText(dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1), W/2, 704);
+  ctx.fillText(dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1), W/2, 806);
 
   // Divider
   ctx.strokeStyle = 'rgba(244,164,41,.28)'; ctx.lineWidth = 1;
   ctx.setLineDash([9,9]);
-  ctx.beginPath(); ctx.moveTo(100,745); ctx.lineTo(W-100,745); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(100,848); ctx.lineTo(W-100,848); ctx.stroke();
   ctx.setLineDash([]);
 
   // Big daylight
   ctx.font = 'bold 38px -apple-system,Arial,sans-serif';
   ctx.fillStyle = '#a0c4e0';
-  ctx.fillText('DAGSLYS', W/2, 805);
+  ctx.fillText('DAGSLYS', W/2, 912);
   ctx.font = 'bold 126px -apple-system,Arial,sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(fmtHMS(d.todayDL), W/2, 916);
+  ctx.fillText(fmtHMS(d.todayDL), W/2, 1025);
 
   // Stats
-  const c1 = W/2 - 205, c2 = W/2 + 205, rH = 128, y0 = 968;
+  const c1 = W/2 - 205, c2 = W/2 + 205, rH = 140, y0 = 1082;
   function stat(x, y, lbl, val, color='#fff') {
     ctx.textAlign = 'center';
     ctx.font = '500 28px -apple-system,Arial,sans-serif';
@@ -1197,41 +1208,25 @@ function exportPNG() {
   ctx.beginPath(); ctx.moveTo(100, y0+rH*2+12); ctx.lineTo(W-100, y0+rH*2+12); ctx.stroke();
   ctx.setLineDash([]);
 
-  const y2 = y0 + rH*2 + 28;
-  stat(c1, y2,      'SOL SIDEN I GÅR',  fmtSignedMS(d.moreThanYesterday),  '#4ade80');
+  const y2 = y0 + rH*2 + 50;
+  stat(c1, y2,      'MER ENN I GÅR',  fmtSignedMS(d.moreThanYesterday),  '#4ade80');
   stat(c2, y2,      'SIDEN SOLVERV',  fmtSignedHMS(d.moreSinceSolstice),  '#4ade80');
   stat(c1, y2+rH,   'SIST LIKE LYST', d.equivalentDate
     ? fmtDateShort(d.equivalentDate) : '–', '#e8f4fd');
-  stat(c2, y2+rH,   'DAGER SIDEN',
-    d.dgSidenSist !== null ? `${d.dgSidenSist} dager` : '–', '#e8f4fd');
+  stat(c2, y2+rH,   'SIDEN SIST',
+    d.dgSidenSist !== null ? `${d.dgSidenSist} dg` : '–', '#e8f4fd');
 
-  // Merkedager på PNG – alle tre typer stables vertikalt
-  function drawMilestoneBanner(by, emoji, text, bgColor, borderColor, textColor) {
-    ctx.fillStyle = bgColor;
-    roundRect(ctx, 60, by, W-120, 96, 22); ctx.fill();
-    ctx.strokeStyle = borderColor; ctx.lineWidth = 1.5;
-    roundRect(ctx, 61, by+1, W-122, 94, 21); ctx.stroke();
-    ctx.font = 'bold 34px -apple-system,Arial,sans-serif';
-    ctx.fillStyle = textColor; ctx.textAlign = 'center';
-    ctx.fillText(`${emoji}  ${text}`, W/2, by + 56);
-  }
-  let bannerY = y2 + rH*2 + 32;
-  const bannerH = 112;
-  if (d.milestones && d.milestones.length > 0) {
+  // Milestone on PNG
+  if (d.milestones.length > 0) {
     const m = d.milestones[d.milestones.length - 1];
-    drawMilestoneBanner(bannerY, m.emoji, m.label,
-      'rgba(244,164,41,.13)', 'rgba(244,164,41,.42)', '#f4a429');
-    bannerY += bannerH;
-  }
-  if (d.solvervMilestones && d.solvervMilestones.length > 0) {
-    const sm = d.solvervMilestones[d.solvervMilestones.length - 1];
-    drawMilestoneBanner(bannerY, sm.emoji, sm.label,
-      'rgba(96,165,250,.12)', 'rgba(96,165,250,.45)', '#93c5fd');
-    bannerY += bannerH;
-  }
-  if (d.month === 3 && d.day === 20) {
-    drawMilestoneBanner(bannerY, '🌸', 'HURRA! Vårjevndøgn! Den mørkeste tiden er over! 🌱',
-      'rgba(74,222,128,.12)', 'rgba(74,222,128,.5)', '#4ade80');
+    const by = y2 + rH*2 + 32;
+    ctx.fillStyle = 'rgba(244,164,41,.13)';
+    roundRect(ctx, 60, by, W-120, 96, 22); ctx.fill();
+    ctx.strokeStyle = 'rgba(244,164,41,.42)'; ctx.lineWidth = 1.5;
+    roundRect(ctx, 61, by+1, W-122, 94, 21); ctx.stroke();
+    ctx.font = 'bold 36px -apple-system,Arial,sans-serif';
+    ctx.fillStyle = '#f4a429'; ctx.textAlign = 'center';
+    ctx.fillText(`${m.emoji}  ${m.label}`, W/2, by + 56);
   }
 
   // Tilbakestill skygge
