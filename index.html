@@ -617,6 +617,17 @@ function getWinterSolstice(forDate) {
   return forDay < solDay ? decSolstice(y - 1) : thisSolstice;
 }
 
+function getSummerSolstice(forDate) {
+  function junSolstice(yr) {
+    const Y = (yr - 2000) / 1000;
+    const JDE = 2451716.56767 + 365241.62603*Y + 0.00325*Y*Y + 0.00888*Y*Y*Y - 0.00030*Y*Y*Y*Y;
+    const ms  = (JDE - 2440587.5) * 86400000;
+    const d   = new Date(ms);
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0));
+  }
+  return junSolstice(forDate.getUTCFullYear());
+}
+
 // Merkedager: hver halvtime dagslys fra 6:00 til 18:30
 const MILESTONES = (() => {
   const special = {
@@ -726,6 +737,13 @@ function updateSolarData() {
   const dgSidenSist = equivalentDate
     ? Math.round((selectedDate - equivalentDate) / 86400000) : null;
 
+  const summerSolstice = getSummerSolstice(new Date(Date.UTC(year, month - 1, day)));
+  const daysSinceSummerSolstice = Math.round((selectedDate - summerSolstice) / 86400000);
+  const equivalentDateSummer = daysSinceSummerSolstice > 0
+    ? new Date(summerSolstice.getTime() - daysSinceSummerSolstice * 86400000) : null;
+  const dgSidenSistSommer = equivalentDateSummer
+    ? Math.round((selectedDate - equivalentDateSummer) / 86400000) : null;
+
   const dawnDur = (todayData.dawn) ? todayData.sunrise - todayData.dawn : null;
   const duskDur = (todayData.dusk) ? todayData.dusk    - todayData.sunset : null;
 
@@ -741,7 +759,8 @@ function updateSolarData() {
 
   lastData = { year, month, day, coords, todayData, solstice, daysSinceSolstice,
                todayDL, yesterdayDL, solsticeDL, moreThanYesterday, moreSinceSolstice,
-               equivalentDate, dgSidenSist, dawnDur, duskDur, milestones, solvervMilestones, dataSource };
+               equivalentDate, dgSidenSist, dawnDur, duskDur, milestones, solvervMilestones, dataSource,
+               summerSolstice, daysSinceSummerSolstice, equivalentDateSummer, dgSidenSistSommer };
 
   renderResults(lastData);
 }
@@ -772,12 +791,19 @@ function renderResults(d) {
     `Solverv: ${fmtDateLong(d.solstice)}`;
 
   // Dag siden like lyst
-  if (d.equivalentDate && d.dgSidenSist !== null) {
+  if (d.daysSinceSummerSolstice > 0 && d.equivalentDateSummer) {
+    document.getElementById('valTilsvarende').textContent = `${d.dgSidenSistSommer} dager siden`;
+    document.getElementById('subTilsvarende').textContent =
+      `Like lyst før sommersolverv: ${fmtDateShort(d.equivalentDateSummer)}`;
+  } else if (d.daysSinceSummerSolstice === 0) {
+    document.getElementById('valTilsvarende').textContent = 'Det ER sommersolverv!';
+    document.getElementById('subTilsvarende').textContent = 'Lengste dagen på året';
+  } else if (d.equivalentDate && d.dgSidenSist !== null) {
     document.getElementById('valTilsvarende').textContent = `${d.dgSidenSist} dager siden`;
     document.getElementById('subTilsvarende').textContent =
       `Like lyst før vintersolverv: ${fmtDateShort(d.equivalentDate)}`;
   } else if (d.daysSinceSolstice === 0) {
-    document.getElementById('valTilsvarende').textContent = 'Det ER solverv!';
+    document.getElementById('valTilsvarende').textContent = 'Det er SOLSNU i dag! Hurra!';
     document.getElementById('subTilsvarende').textContent = 'Korteste dagen på året';
   } else {
     document.getElementById('valTilsvarende').textContent = '–';
