@@ -1151,46 +1151,40 @@ function exportPNG() {
     ctx.fillStyle = sunGrad; ctx.fill();
   }
 
-  // Horizon
-  const hGrad = ctx.createLinearGradient(0, 618, 0, 622);
-  hGrad.addColorStop(0, 'rgba(244,164,41,.75)');
-  hGrad.addColorStop(1, 'rgba(244,164,41,.15)');
-  ctx.fillStyle = hGrad; ctx.fillRect(60, 618, W-120, 3);
-
   ctx.textAlign = 'center';
 
   // Tydelig skygge på all tekst for lesbarhet på alle bakgrunner
   ctx.shadowColor = 'rgba(0,0,0,.85)';
   ctx.shadowBlur  = 14;
 
-  // Location
+  // Location – tett under solen
   ctx.font = 'bold 58px -apple-system,Arial,sans-serif';
   ctx.fillStyle = '#f4a429';
-  ctx.fillText(d.coords.name, W/2, 748);
+  ctx.fillText(d.coords.name, W/2, 648);
 
   // Date
   ctx.font = '400 40px -apple-system,Arial,sans-serif';
   ctx.fillStyle = '#e8f4fd';
   const selectedDate = new Date(Date.UTC(d.year, d.month-1, d.day));
   const dateLabel = selectedDate.toLocaleDateString('no-NO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  ctx.fillText(dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1), W/2, 806);
+  ctx.fillText(dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1), W/2, 704);
 
   // Divider
   ctx.strokeStyle = 'rgba(244,164,41,.28)'; ctx.lineWidth = 1;
   ctx.setLineDash([9,9]);
-  ctx.beginPath(); ctx.moveTo(100,848); ctx.lineTo(W-100,848); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(100,745); ctx.lineTo(W-100,745); ctx.stroke();
   ctx.setLineDash([]);
 
   // Big daylight
   ctx.font = 'bold 38px -apple-system,Arial,sans-serif';
   ctx.fillStyle = '#a0c4e0';
-  ctx.fillText('DAGSLYS', W/2, 912);
+  ctx.fillText('DAGSLYS', W/2, 805);
   ctx.font = 'bold 126px -apple-system,Arial,sans-serif';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(fmtHMS(d.todayDL), W/2, 1025);
+  ctx.fillText(fmtHMS(d.todayDL), W/2, 916);
 
   // Stats
-  const c1 = W/2 - 205, c2 = W/2 + 205, rH = 140, y0 = 1082;
+  const c1 = W/2 - 205, c2 = W/2 + 205, rH = 128, y0 = 968;
   function stat(x, y, lbl, val, color='#fff') {
     ctx.textAlign = 'center';
     ctx.font = '500 28px -apple-system,Arial,sans-serif';
@@ -1208,7 +1202,7 @@ function exportPNG() {
   ctx.beginPath(); ctx.moveTo(100, y0+rH*2+12); ctx.lineTo(W-100, y0+rH*2+12); ctx.stroke();
   ctx.setLineDash([]);
 
-  const y2 = y0 + rH*2 + 50;
+  const y2 = y0 + rH*2 + 28;
   stat(c1, y2,      'MER ENN I GÅR',  fmtSignedMS(d.moreThanYesterday),  '#4ade80');
   stat(c2, y2,      'SIDEN SOLVERV',  fmtSignedHMS(d.moreSinceSolstice),  '#4ade80');
   stat(c1, y2+rH,   'LIKE LYST', d.equivalentDate
