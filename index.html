@@ -122,7 +122,7 @@
       50%{ box-shadow: 0 0 22px 6px rgba(74,222,128,.22); }
     }
     .milestone-icon { font-size: 1.9rem; flex-shrink: 0; }
-    .milestone-text h3 { color: var(--accent); font-size: 1rem; font-weight: 700; }
+    .milestone-text h3 { color: #ffffff; font-size: 1.08rem; font-weight: 700; }
     .milestone-banner.solverv .milestone-text h3 { color: #93c5fd; }
     .milestone-text p  { color: var(--text); font-size: .82rem; margin-top: 3px; }
 
@@ -804,8 +804,7 @@ function renderResults(d) {
     banner.innerHTML = `
       <div class="milestone-icon">${m.emoji}</div>
       <div class="milestone-text">
-        <h3>🎉 Merkedag! ${m.label}</h3>
-        <p>I dag passerte dagslyset ${m.hLabel} for første gang i ${(d.month > 3 || (d.month === 3 && d.day >= 20)) ? 'vår' : 'vinter'}!</p>
+        <h3>🎉 Merkedag! ${m.label} ☀️</h3>
       </div>`;
     banner.className = 'milestone-banner';
   } else {
@@ -819,8 +818,7 @@ function renderResults(d) {
     solvervBanner.innerHTML = `
       <div class="milestone-icon">${sm.emoji}</div>
       <div class="milestone-text">
-        <h3>☀️ Merkedag! ${sm.label}</h3>
-        <p>I dag passerte vi ${sm.hLabel} mer dagslys enn ved vintersolverv!</p>
+        <h3>☀️ Merkedag! ${sm.label} ☀️</h3>
       </div>`;
     solvervBanner.className = 'milestone-banner solverv';
   } else {
